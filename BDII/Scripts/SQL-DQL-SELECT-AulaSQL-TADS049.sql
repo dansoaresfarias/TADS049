@@ -76,6 +76,7 @@ select nome "Funcionário", cpf "CPF",
     cargaHoraria "Carga Horária", salario "Salário"
 		from funcionario
 			order by nome;
+            
 -- https://dev.mysql.com/doc/refman/8.4/en/string-functions.html#function_upper
 -- https://dev.mysql.com/doc/refman/8.4/en/string-functions.html#function_replace
 -- https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_date-format
@@ -89,7 +90,35 @@ select upper(nome) "Funcionário",
     email "E-mail", concat(cargaHoraria, 'h') "Carga Horária", 
     format(salario, 2, 'de_DE') "Salário"
 		from funcionario
-			order by nome;            
+			order by nome;  
             
+select upper(nome) "Funcionário", 
+	replace(replace(cpf, '.', ''), '-', '') "CPF", 
+	carteiraTrab "Carteira de Trabalho", 
+    ucase(genero) "Gênero", upper(estadoCivil) "Estado Civil",
+	date_format(dataNasc, '%d/%m/%Y') as "Data de Nascimento", 
+    email "E-mail", concat(cargaHoraria, 'h') "Carga Horária", 
+    format(salario, 2, 'de_DE') "Salário",
+    cidade "Cidade"
+		from funcionario, endereco
+			where cpf = funcionario_cpf
+				order by nome; 
             
+ select upper(f.nome) "Funcionário", 
+	replace(replace(f.cpf, '.', ''), '-', '') "CPF", 
+	f.carteiraTrab "Carteira de Trabalho", 
+    ucase(f.genero) "Gênero", upper(f.estadoCivil) "Estado Civil",
+	date_format(f.dataNasc, '%d/%m/%Y') as "Data de Nascimento", 
+    f.email "E-mail", t.numero "Telefone",
+    concat(f.cargaHoraria, 'h') "Carga Horária", 
+    format(f.salario, 2, 'de_DE') "Salário",
+    e.cidade "Cidade"
+		from funcionario f
+		inner join endereco e on f.cpf = e.funcionario_cpf
+        inner join telefone t on f.cpf = t.funcionario_cpf
+				order by f.nome; 
+
+
+
+
             
