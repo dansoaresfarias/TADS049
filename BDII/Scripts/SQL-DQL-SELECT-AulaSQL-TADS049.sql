@@ -166,11 +166,132 @@ select func.nome "Funcionário", func.cpf "CPF",
 		inner join dependente dep on dep.funcionario_cpf = func.cpf
 			group by func.cpf
 					order by func.nome;
+                    
+select func.cpf "CPF", func.nome "Funcionário", 
+	count(fer.idferias) "Quantas Férias",
+    sum(fer.qtdDias) "Total de Dias já Gozados"
+		from funcionario func
+        left join ferias fer on fer.Funcionario_CPF = func.cpf
+			group by func.cpf
+				order by func.nome;
+	
+select dep.nome "Departamento", count(trb.Funcionario_CPF) "Qtd Funcionários"
+	from trabalhar trb
+    inner join departamento dep on trb.Departamento_idDepartamento = dep.idDepartamento
+		where trb.dataFim is null
+			group by trb.Departamento_idDepartamento
+				order by dep.nome;
+
+select dep.nome "Departamento", count(trb.Funcionario_CPF) "Qtd Funcionários",
+	concat("R$ ",format(sum(func.salario), 2, 'de_DE')) "Total Folha Salarial",
+    concat("R$ ",format(avg(func.salario), 2, 'de_DE')) "Média Salarial"
+	from trabalhar trb
+    inner join departamento dep on trb.Departamento_idDepartamento = dep.idDepartamento
+    inner join funcionario func on trb.Funcionario_CPF = func.CPF
+		where trb.dataFim is null
+			group by trb.Departamento_idDepartamento
+				order by sum(func.salario) desc;
+
+select func.nome "Funcionário", func.cpf "CPF", func.chavePIX "Chave PIX", 
+	concat(func.cargaHoraria, 'h') "Carga Horária",
+    crg.nome "Cargo",
+    concat("R$ ",format(func.salario, 2, 'de_DE')) "Salário",
+    dep.nome "Departamento"
+    from funcionario func
+    inner join trabalhar trb on trb.Funcionario_CPF = func.cpf
+    inner join cargo crg on crg.CBO = trb.Cargo_CBO
+    inner join departamento dep on dep.idDepartamento = trb.Departamento_idDepartamento
+		where trb.dataFim is null
+			order by func.nome;
+
+select avg(salario) from funcionario;
+
+select func.nome "Funcionário", func.cpf "CPF", func.chavePIX "Chave PIX", 
+	concat(func.cargaHoraria, 'h') "Carga Horária",
+    crg.nome "Cargo",
+    concat("R$ ",format(func.salario, 2, 'de_DE')) "Salário",
+    dep.nome "Departamento"
+    from funcionario func
+    inner join trabalhar trb on trb.Funcionario_CPF = func.cpf
+    inner join cargo crg on crg.CBO = trb.Cargo_CBO
+    inner join departamento dep on dep.idDepartamento = trb.Departamento_idDepartamento
+		where trb.dataFim is null and
+			func.salario >= (select avg(salario) from funcionario)
+			order by func.nome;
+
+create view relFuncionario as 
+	select func.nome "Funcionário", func.cpf "CPF", func.chavePIX "Chave PIX", 
+		concat(func.cargaHoraria, 'h') "Carga Horária",
+		crg.nome "Cargo",
+		concat("R$ ",format(func.salario, 2, 'de_DE')) "Salário",
+		dep.nome "Departamento"
+		from funcionario func
+		inner join trabalhar trb on trb.Funcionario_CPF = func.cpf
+		inner join cargo crg on crg.CBO = trb.Cargo_CBO
+		inner join departamento dep on dep.idDepartamento = trb.Departamento_idDepartamento
+			where trb.dataFim is null
+				order by func.nome;
+
+select * from relfuncionario;
+
+select func.nome "Funcionário", func.cpf "CPF", func.chavePIX "Chave PIX", 
+	concat(func.cargaHoraria, 'h') "Carga Horária",
+    crg.nome "Cargo",
+    count(dpd.CPF) "Qtd Filhos",
+    concat("R$ ",format(func.salario, 2, 'de_DE')) "Salário",
+    dep.nome "Departamento"
+    from funcionario func
+    inner join trabalhar trb on trb.Funcionario_CPF = func.cpf
+    inner join cargo crg on crg.CBO = trb.Cargo_CBO
+    inner join departamento dep on dep.idDepartamento = trb.Departamento_idDepartamento
+    left join dependente dpd on dpd.Funcionario_CPF = func.cpf
+		where trb.dataFim is null
+			group by func.cpf
+				order by func.nome;
+
+select func.cpf "cpf", count(dep.cpf) * 180 "auxCreche"
+	from funcionario func
+	left join dependente dep on dep.Funcionario_CPF = func.cpf
+		where timestampdiff(year, dep.dataNasc, now()) < 7
+		group by func.cpf;
+
+create view vAuxCreche as
+	select func.cpf "cpf", count(dep.cpf) * 180 "auxCreche"
+		from funcionario func
+		left join dependente dep on dep.Funcionario_CPF = func.cpf
+			where timestampdiff(year, dep.dataNasc, now()) < 7
+			group by func.cpf;
+
+select func.nome "Funcionário", func.cpf "CPF", func.chavePIX "Chave PIX", 
+	concat(func.cargaHoraria, 'h') "Carga Horária",
+    crg.nome "Cargo",
+    concat("R$ ",format(vac.auxCreche, 2, 'de_DE')) "Auxílio Creche",
+    concat("R$ ",format(func.salario, 2, 'de_DE')) "Salário",
+    dep.nome "Departamento"
+    from funcionario func
+    inner join trabalhar trb on trb.Funcionario_CPF = func.cpf
+    inner join cargo crg on crg.CBO = trb.Cargo_CBO
+    inner join departamento dep on dep.idDepartamento = trb.Departamento_idDepartamento
+    left join vauxcreche vac on vac.cpf = func.cpf
+		where trb.dataFim is null
+			order by func.nome;
+
+create view relPagamento as 
+	select func.nome "Funcionário", func.cpf "CPF", func.chavePIX "Chave PIX", 
+		concat(func.cargaHoraria, 'h') "Carga Horária",
+		crg.nome "Cargo",
+		concat("R$ ",format(vac.auxCreche, 2, 'de_DE')) "Auxílio Creche",
+		concat("R$ ",format(func.salario, 2, 'de_DE')) "Salário",
+		dep.nome "Departamento"
+		from funcionario func
+		inner join trabalhar trb on trb.Funcionario_CPF = func.cpf
+		inner join cargo crg on crg.CBO = trb.Cargo_CBO
+		inner join departamento dep on dep.idDepartamento = trb.Departamento_idDepartamento
+		left join vauxcreche vac on vac.cpf = func.cpf
+			where trb.dataFim is null
+				order by func.nome;
 
 
 
 
 
-
-
-            
