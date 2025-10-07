@@ -265,7 +265,7 @@ create view vAuxCreche as
 select func.nome "Funcionário", func.cpf "CPF", func.chavePIX "Chave PIX", 
 	concat(func.cargaHoraria, 'h') "Carga Horária",
     crg.nome "Cargo",
-    concat("R$ ",format(vac.auxCreche, 2, 'de_DE')) "Auxílio Creche",
+    concat("R$ ",format(coalesce(vac.auxCreche, 0), 2, 'de_DE')) "Auxílio Creche",
     concat("R$ ",format(func.salario, 2, 'de_DE')) "Salário",
     dep.nome "Departamento"
     from funcionario func
