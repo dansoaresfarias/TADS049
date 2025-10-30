@@ -280,7 +280,7 @@ create view relPagamento as
 	select func.nome "Funcionário", func.cpf "CPF", func.chavePIX "Chave PIX", 
 		concat(func.cargaHoraria, 'h') "Carga Horária",
 		crg.nome "Cargo",
-		concat("R$ ",format(vac.auxCreche, 2, 'de_DE')) "Auxílio Creche",
+		concat("R$ ",format(coalesce(vac.auxCreche, 0), 2, 'de_DE')) "Auxílio Creche",
 		concat("R$ ",format(func.salario, 2, 'de_DE')) "Salário",
 		dep.nome "Departamento"
 		from funcionario func
@@ -291,6 +291,32 @@ create view relPagamento as
 			where trb.dataFim is null
 				order by func.nome;
 
+update funcionario, 
+	(select func.cpf from funcionario func
+	inner join trabalhar trb on trb.Funcionario_CPF = func.cpf
+	inner join cargo crg on crg.CBO = trb.Cargo_CBO
+    where crg.nome like "Segurança%" or crg.nome like "Auxiliar%") as crgFunc
+	set cargaHoraria = 36
+		where funcionario.cpf = crgFunc.cpf;
+
+select upper(func.nome) "Funcionário", 
+	replace(replace(func.cpf, '.', ''), '-', '') "CPF",
+	func.chavePIX "Chave PIX",
+    func.cargaHoraria "Carga Horária"
+	from funcionario func;
+
+
+
+
+
+
+
+
+
+
+
+
+-- Auxílio Saúde: 180 (<25), 280(25>=  and <35), 380 (35>=  and <45), 480 (45>=  and <55) depois 600
 
 
 
