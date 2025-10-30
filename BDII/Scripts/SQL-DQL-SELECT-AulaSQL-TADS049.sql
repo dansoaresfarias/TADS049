@@ -169,7 +169,7 @@ select func.nome "Funcionário", func.cpf "CPF",
                     
 select func.cpf "CPF", func.nome "Funcionário", 
 	count(fer.idferias) "Quantas Férias",
-    sum(fer.qtdDias) "Total de Dias já Gozados"
+    coalesce(sum(fer.qtdDias), 0) "Total de Dias já Gozados"
 		from funcionario func
         left join ferias fer on fer.Funcionario_CPF = func.cpf
 			group by func.cpf
@@ -299,25 +299,94 @@ update funcionario,
 	set cargaHoraria = 36
 		where funcionario.cpf = crgFunc.cpf;
 
+-- Vale Alimentação: 15 valor de um reifeição, 22 dias úteis -- caso a ch for 36h a reição é dobrada
 select upper(func.nome) "Funcionário", 
 	replace(replace(func.cpf, '.', ''), '-', '') "CPF",
 	func.chavePIX "Chave PIX",
-    func.cargaHoraria "Carga Horária"
-	from funcionario func;
-
-
-
-
-
-
-
-
-
-
-
+    concat(func.cargaHoraria, 'h') "Carga Horária",
+    case func.cargaHoraria when 36 then 22 * 15 * 2
+		else 22 * 15
+	end "Vale Alimentação"
+	from funcionario func
+		order by func.nome;
 
 -- Auxílio Saúde: 180 (<25), 280(25>=  and <35), 380 (35>=  and <45), 480 (45>=  and <55) depois 600
+select upper(func.nome) "Funcionário", 
+	replace(replace(func.cpf, '.', ''), '-', '') "CPF",
+	func.chavePIX "Chave PIX",
+    concat(func.cargaHoraria, 'h') "Carga Horária",
+    case func.cargaHoraria when 36 then 22 * 15 * 2
+		else 22 * 15
+	end "Vale Alimentação",
+    case when timestampdiff(year, func.dataNasc, now()) < 25
+			then 180
+		when timestampdiff(year, func.dataNasc, now()) between 25 and 35
+			then 280
+		when timestampdiff(year, func.dataNasc, now()) between 35 and 45
+			then 380
+		when timestampdiff(year, func.dataNasc, now()) between 45 and 55
+			then 480
+		else 600
+    end "Auxílio Saúde"
+	from funcionario func
+		order by func.nome;
 
+select substr(dataInicio, 1, 7) "Ano - mês", count(idFerias) "Quantidade"
+	from ferias
+		group by substr(dataInicio, 1, 7)
+		order by substr(dataInicio, 1, 7);
 
+select substr(dataInicio, 6, 2) "Mês", count(idFerias) "Quantidade"
+	from ferias
+		group by substr(dataInicio, 6, 2)
+		order by substr(dataInicio, 6, 2);
 
+select substr(dataInicio, 6, 2) "Mês", count(idFerias) "Quantidade"
+	from ferias
+		group by substr(dataInicio, 6, 2)
+		order by count(idFerias) desc
+			limit 1;
 
+select avg(salario) from funcionario;
+
+select avg(salario), round(avg(salario), 2) from funcionario;
+
+select avg(salario), round(avg(salario), 2), truncate(avg(salario), 2) from funcionario;
+
+select sysdate(), adddate(sysdate(), interval -5 day);
+
+-- https://dev.mysql.com/doc/refman/8.0/en/create-procedure.html
+-- https://dev.mysql.com/doc/refman/8.0/en/if.html
+delimiter $$
+create function calcValeAlimentacao(ch int)
+	returns decimal(5,2) deterministic
+    begin
+		if(ch = 36) then return 22 * 15 * 2;
+			else return 22 * 15;
+		end if;
+    end $$
+delimiter ;
+
+delimiter $$
+create function calcAuxSaude(dn date)
+	returns decimal(5,2) deterministic
+    begin
+		declare idade int;
+        select timestampdiff(year, dn, now()) into idade;
+        if (idade < 25) then return 180;
+			elseif (idade between 25 and 35) then return 280;
+            elseif (idade between 35 and 45) then return 380;
+            elseif (idade between 45 and 55) then return 480;
+            else return 600;
+		end if;
+    end $$
+delimiter ;
+
+select upper(func.nome) "Funcionário", 
+	replace(replace(func.cpf, '.', ''), '-', '') "CPF",
+	func.chavePIX "Chave PIX",
+    concat(func.cargaHoraria, 'h') "Carga Horária",
+    concat("R$ ", format(calcValeAlimentacao(func.cargaHoraria), 2, 'de_DE')) "Vale Alimentação",
+    concat("R$ ", format(calcAuxSaude(func.dataNasc), 2, 'de_DE')) "Auxílio Saúde"
+	from funcionario func
+		order by func.nome;
