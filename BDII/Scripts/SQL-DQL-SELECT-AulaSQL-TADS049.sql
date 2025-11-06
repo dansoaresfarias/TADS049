@@ -417,10 +417,46 @@ delimiter ;
 
 SELECT * FROM pousadaalambique.vauxcreche;
 
+delimiter $$
+create function calcINSS(salario decimal(7,2))
+	returns decimal(6,2) deterministic
+    begin
+		if(salario <= 1518)
+			then return salario * 0.075;
+		elseif(salario > 1518 and salario <= 2793.88)
+			then return salario * 0.09;
+		elseif(salario > 2793.88 and salario <= 4190.83)
+			then return salario * 0.12;
+		elseif (salario > 4190.83 and salario <= 8157.41)
+			then return salario * 0.14;
+		else return 8157.41 * 0.14;
+		end if;
+    end $$
+delimiter ;
+
+delimiter $$
+create function calcIRRF(salario decimal(7,2))
+	returns decimal(6,2) deterministic
+    begin
+		if(salario <= 2259.20)
+			then return 0.0;
+		elseif(salario > 2259.20 and salario <= 2826.65)
+			then return salario * 0.075;
+		elseif(salario > 2826.65 and salario <= 3751.05)
+			then return salario * 0.15;
+		elseif (salario > 3751.05 and salario <= 4664.68)
+			then return salario * 0.225;
+		else return salario * 0.275;
+		end if;
+    end $$
+delimiter ;
+
 select upper(func.nome) "Funcionário",
 	replace(replace(func.cpf, '.', ''), '-', '') "CPF",
     func.chavePIX "Chave PIX",
     concat(func.cargaHoraria, 'h') "Carga Horária",
+    concat("R$ ", format(func.salario, 2 , 'de_DE')) 
+		"Salário Bruto",
     concat("R$ ", format(calcValeAlimentacao(func.cargaHoraria), 2 , 'de_DE')) 
 		"Vale Alimentação",
     concat("R$ ", format(calcAuxSaude(func.dataNasc), 2 , 'de_DE'))
@@ -428,7 +464,16 @@ select upper(func.nome) "Funcionário",
 	concat("R$ ", format(calcValeTransporte(func.cpf), 2 , 'de_DE'))
 		"Vale Transporte",
 	concat("R$ ", format(coalesce(vac.auxcreche, 0), 2 , 'de_DE'))
-		"Auxílio Creche"
+		"Auxílio Creche",
+	concat("-R$ ", format(calcINSS(func.salario), 2 , 'de_DE'))
+		"INSS",
+	concat("-R$ ", format(calcIRRF(func.salario), 2 , 'de_DE'))
+		"IRRF",
+    concat("R$ ", format(func.salario + calcValeAlimentacao(func.cargaHoraria) +
+    calcAuxSaude(func.dataNasc) + calcValeTransporte(func.cpf) + 
+    coalesce(vac.auxcreche, 0) - calcINSS(func.salario)
+    - calcIRRF(func.salario), 2 , 'de_DE'))
+        "Salário Líquido"
 	from funcionario func
 		left join vauxcreche vac on vac.cpf = func.cpf
 		order by func.nome;
