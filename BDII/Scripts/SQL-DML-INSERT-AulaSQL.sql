@@ -1045,25 +1045,7 @@ INSERT INTO `Hospede` (`docIdentificacao`, `nome`, `genero`, `dataNasc`, `telefo
 ('70.707.070-7 CE', 'Pelé', 'Masculino', '1940-10-23', '85900990011', 'pele@email.com', NULL),
 ('80.808.080-8 SC', 'Quincy Jones', 'Masculino', '1933-03-14', '48999001122', 'quincy.jones@email.com', NULL);
 
-CALL sp_gerar_hospedagem_completa(100);
-
-insert into reserva (dataInicio, dataFim, qtdPessoas, `status`, Funcionario_CPF,
-	Responsavel_docIdentificacao)
-	values ('2025-11-10', '2025-11-14', 2, 'Confirmada', "134.411.311-44",
-			"77.666.777-6 CE"),
-            ('2025-11-10', '2025-11-14', 2, 'Confirmada', "108.801.888-11",
-			"88.777.888-7 SC"),
-            ('2025-11-10', '2025-11-14', 3, 'Confirmada', "134.411.311-44",
-			"44.333.444-3 RJ"),
-            ('2025-11-12', '2025-11-16', 2, 'Confirmada', "108.801.888-11",
-			"PAS-CA123123"),
-            ('2025-11-12', '2025-11-16', 4, 'Confirmada', "108.801.888-11",
-			"PAS-CN654987"),
-            ('2025-11-12', '2025-11-16', 6, 'Confirmada', "108.801.888-11",
-			"40.404.040-4 RJ");
-            
-insert into UH_Reserva
-	values (40, 302), (41, 303), (42, 304), (43, 305), (44, 306), (45, 307);
+CALL sp_gerar_hospedagem_completa(500);
 
 
 

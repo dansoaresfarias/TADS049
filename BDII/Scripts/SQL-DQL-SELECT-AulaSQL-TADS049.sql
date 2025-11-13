@@ -477,3 +477,166 @@ select upper(func.nome) "Funcionário",
 	from funcionario func
 		left join vauxcreche vac on vac.cpf = func.cpf
 		order by func.nome;
+
+create view vRelFolhaSalarial as
+	select upper(func.nome) "Funcionário",
+	replace(replace(func.cpf, '.', ''), '-', '') "CPF",
+    func.chavePIX "Chave PIX",
+    concat(func.cargaHoraria, 'h') "Carga Horária",
+    concat("R$ ", format(func.salario, 2 , 'de_DE')) 
+		"Salário Bruto",
+    concat("R$ ", format(calcValeAlimentacao(func.cargaHoraria), 2 , 'de_DE')) 
+		"Vale Alimentação",
+    concat("R$ ", format(calcAuxSaude(func.dataNasc), 2 , 'de_DE'))
+		"Auxílio Saúde",
+	concat("R$ ", format(calcValeTransporte(func.cpf), 2 , 'de_DE'))
+		"Vale Transporte",
+	concat("R$ ", format(coalesce(vac.auxcreche, 0), 2 , 'de_DE'))
+		"Auxílio Creche",
+	concat("-R$ ", format(calcINSS(func.salario), 2 , 'de_DE'))
+		"INSS",
+	concat("-R$ ", format(calcIRRF(func.salario), 2 , 'de_DE'))
+		"IRRF",
+    concat("R$ ", format(func.salario + calcValeAlimentacao(func.cargaHoraria) +
+    calcAuxSaude(func.dataNasc) + calcValeTransporte(func.cpf) + 
+    coalesce(vac.auxcreche, 0) - calcINSS(func.salario)
+    - calcIRRF(func.salario), 2 , 'de_DE'))
+        "Salário Líquido"
+	from funcionario func
+		left join vauxcreche vac on vac.cpf = func.cpf
+		order by func.nome;
+        
+delimiter $$
+create procedure cadFuncionario(in pCPF varchar(14),
+								in pnome varchar(60),
+								in pnomeSocial varchar(45),
+								in pdataNasc date,
+								in pgenero varchar(25),
+								in pestadoCivil varchar(25),
+								in pemail varchar(80),
+								in pcarteiraTrab varchar(45),
+								in pcargaHoraria int,
+								in psalario decimal(7,2),
+								in pchavePIX varchar(45),
+                                in pUF char(2),
+								in pcidade varchar(45),
+								in pbairro varchar(45),
+								in prua varchar(45),
+								in pnumero int,
+								in pcomp varchar(45),
+								in pcep varchar(9),
+                                in ptelefone1 varchar(15),
+                                in ptelefone2 varchar(15),
+                                in ptelefone3 varchar(15))
+	begin
+		insert into funcionario
+			value (pCPF, pnome, pnomeSocial, pdataNasc, pgenero, 
+            pestadoCivil, pemail, pcarteiraTrab, pcargaHoraria, psalario, 
+            pchavePIX, 1, 0.0);
+		insert into endereco
+			value (pCPF, pUF, pcidade, pbairro, prua, pnumero, pcomp, pcep);
+		insert into telefone (numero, Funcionario_CPF)
+			value (ptelefone1, pCPF);
+		if(ptelefone2 is not null)
+			then insert into telefone (numero, Funcionario_CPF)
+					value (ptelefone2, pCPF);
+		end if;
+		if(ptelefone3 is not null)
+			then insert into telefone (numero, Funcionario_CPF)
+					value (ptelefone3, pCPF);
+		end if;
+    end $$
+delimiter ;
+
+desc endereco;
+
+call cadFuncionario("098.980.890-89", "Marcelly Arcanjo", null, '2000-06-06',
+	"Feminino", "Casada", "marcelly.arcanjo@gmail.com", "3214320-11",
+    36, 3100, "marcelly.arcanjo@gmail.com", "PE", "Recife", "Macaxeira",
+    "Rua Dr. Luis Soares", 132, null, '50760-060', "8198765-4312", 
+    "8178786556", null);
+
+select * from funcionario order by nome;
+
+select * from endereco;
+
+select * from telefone;
+
+insert into reserva (dataInicio, dataFim, qtdPessoas, `status`, Funcionario_CPF,
+	Responsavel_docIdentificacao)
+	values ('2025-11-10', '2025-11-14', 2, 'Confirmada', "134.411.311-44",
+			"77.666.777-6 CE"),
+            ('2025-11-10', '2025-11-14', 2, 'Confirmada', "108.801.888-11",
+			"88.777.888-7 SC"),
+            ('2025-11-10', '2025-11-14', 3, 'Confirmada', "134.411.311-44",
+			"44.333.444-3 RJ"),
+            ('2025-11-12', '2025-11-16', 2, 'Confirmada', "108.801.888-11",
+			"PAS-CA123123"),
+            ('2025-11-12', '2025-11-16', 4, 'Confirmada', "108.801.888-11",
+			"PAS-CN654987"),
+            ('2025-11-12', '2025-11-16', 6, 'Confirmada', "108.801.888-11",
+			"40.404.040-4 RJ");
+            
+insert into UH_Reserva
+	values (40, 319), (41, 320), (42, 321), (43, 322), (44, 323), (45, 324);
+
+-- Proceduro de Check-In FODAAAAAA!!!
+delimiter $$
+create procedure realizarCheckIn(in pIdReserva int,
+						in pdocIdentificacao varchar(25),
+						in pnome varchar(45),
+						in pgenero varchar(25),
+						in pdataNasc date,
+						in ptelefone varchar(15),
+						in pemail varchar(45),
+                        in pResponsavel_docIdentificacao varchar(25))
+	begin
+		declare auxIdHospedagem int default 0;
+        declare ResponsavelReserva varchar(25);
+        
+        select Reserva_idReserva into auxIdHospedagem 
+			from hospedagem
+				where Reserva_idReserva = pIdReserva;
+                
+		update reserva
+			set `status` = "Check-In"
+				where idReserva = pIdReserva;
+    
+		if(auxIdHospedagem = 0) 
+			then insert into hospedagem
+					value (pIdReserva, now(), null, 0.0);
+		end if;
+            
+		insert into hospede
+			value(pdocIdentificacao, pnome, pgenero, pdataNasc, ptelefone, 
+				pemail, pResponsavel_docIdentificacao);
+                
+		insert into hospedar
+			value(pIdReserva, pdocIdentificacao);
+            
+		select Responsavel_docIdentificacao into ResponsavelReserva
+			from reserva
+				where idReserva = pIdReserva;
+            
+		if(auxIdHospedagem = 0)
+			then insert into hospedar
+					value(pIdReserva, ResponsavelReserva);
+		end if;
+	end $$
+delimiter ;
+
+call realizarCheckIn(324, "052.250.520-52", "Lucas Silva", "Masculino", 
+	'1999-11-10', "81984585884", "lucas.silva99@gmail.com", null);
+
+call realizarCheckIn(324, "053.230.530-53", "Maria Silva", "Feminina", 
+	'1999-11-12', "81984585588", "maria.silva99@gmail.com", null);
+
+
+
+
+
+
+
+
+
+
