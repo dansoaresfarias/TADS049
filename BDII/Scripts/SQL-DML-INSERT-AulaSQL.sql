@@ -851,7 +851,7 @@ update funcionario,
 -- -----------------------------------------------------
 -- Tabela `Produto` (Volume Extendido)
 -- -----------------------------------------------------
-INSERT INTO `PousaSaoFrancisco`.`Produto` (`nome`, `quantidade`, `valor`, `tipo`) VALUES
+INSERT INTO `Produto` (`nome`, `quantidade`, `valor`, `tipo`) VALUES
 ('Água Mineral 500ml', 500, 004.50, 'Frigobar'),
 ('Água Mineral com Gás 500ml', 300, 005.00, 'Frigobar'),
 ('Refrigerante Lata (Coca-Cola)', 400, 006.50, 'Frigobar'),
@@ -953,8 +953,8 @@ INSERT INTO `PousaSaoFrancisco`.`Produto` (`nome`, `quantidade`, `valor`, `tipo`
 -- -----------------------------------------------------
 -- Tabela `Hospede` (Volume Extendido - 100 Responsáveis)
 -- -----------------------------------------------------
-INSERT INTO `PousaSaoFrancisco`.`Hospede` (`docIdentificacao`, `nome`, `genero`, `dataNasc`, `telefone`, `email`, `Responsavel_docIdentificacao`) VALUES
-('20.123.456-7 PE', 'Carlos Silva', 'Masculino', '1985-04-10', '81988776655', 'carlos.silva@email.com', NULL),
+INSERT INTO `Hospede` (`docIdentificacao`, `nome`, `genero`, `dataNasc`, `telefone`, `email`, `Responsavel_docIdentificacao`) VALUES
+('20.123.456-0 PE', 'Carlos Silva', 'Masculino', '1985-04-10', '81988776655', 'carlos.silva@email.com', NULL),
 ('30.456.789-1 SP', 'Ana Pereira', 'Feminino', '1990-07-22', '11977665544', 'ana.pereira@email.com', NULL),
 ('40.789.123-5 MG', 'Bruno Costa', 'Masculino', '1992-11-30', '31966554433', 'bruno.costa@email.com', NULL),
 ('50.159.357-8 RJ', 'Fernanda Lima', 'Feminino', '1988-01-15', '21955443322', 'fernanda.lima@email.com', NULL),
